@@ -6,11 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const codeDisplay = document.getElementById("codeDisplay");
     const board = document.getElementById("board");
     const status = document.getElementById("status");
-
     let currentPlayer = "X";
     let boardState = Array(9).fill(null);
     let sessionCode = "";
-    let localPlayer = null; // Identifie si le joueur local est "X" ou "O"
 
     // Gérer la création de session
     hostButton.addEventListener("click", () => {
@@ -18,29 +16,27 @@ document.addEventListener("DOMContentLoaded", () => {
         codeDisplay.textContent = sessionCode;
         menu.classList.add("hidden");
         game.classList.remove("hidden");
-        localPlayer = "X"; // L'hôte est toujours "X"
         updateURL();
-        status.textContent = "En attente d'un autre joueur...";
     });
 
     // Rejoindre une session via un code
     joinButton.addEventListener("click", () => {
         const userCode = prompt("Entrez le code de session:");
         if (userCode) {
-            sessionCode = userCode;
+            const params = new URLSearchParams(window.location.search);
+            const sessionExists = params.get("code") === userCode;
             const stateFromURL = getStateFromURL();
-            if (stateFromURL) {
+
+            if (sessionExists && stateFromURL) {
                 boardState = stateFromURL.board;
                 currentPlayer = stateFromURL.currentPlayer;
                 updateBoard();
-                localPlayer = "O"; // Le joueur qui rejoint est "O"
                 status.textContent = `C'est au tour de ${currentPlayer}`;
+                menu.classList.add("hidden");
+                game.classList.remove("hidden");
             } else {
                 alert("Aucune session trouvée avec ce code.");
-                return;
             }
-            menu.classList.add("hidden");
-            game.classList.remove("hidden");
         }
     });
 
@@ -49,17 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const cell = e.target;
         const index = cell.dataset.index;
 
-        // Vérifier si c'est le tour du joueur local
-        if (localPlayer !== currentPlayer) {
-            alert("Ce n'est pas votre tour !");
-            return;
-        }
-
-        // Vérifier si la case est déjà occupée ou si la partie est terminée
         if (!cell.textContent && !isGameOver(boardState)) {
             cell.textContent = currentPlayer;
             boardState[index] = currentPlayer;
-
             if (checkWin(boardState, currentPlayer)) {
                 status.textContent = `${currentPlayer} a gagné !`;
             } else if (boardState.every((cell) => cell !== null)) {
